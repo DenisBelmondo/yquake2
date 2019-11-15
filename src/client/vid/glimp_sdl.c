@@ -41,8 +41,6 @@ static cvar_t *vid_rate;
 
 static int last_flags = 0;
 static int last_display = 0;
-static int last_position_x = SDL_WINDOWPOS_UNDEFINED;
-static int last_position_y = SDL_WINDOWPOS_UNDEFINED;
 static SDL_Window* window = NULL;
 static qboolean initSuccessful = false;
 static char **displayindices = NULL;
@@ -78,19 +76,15 @@ ClearDisplayIndices(void)
 static qboolean
 CreateSDLWindow(int flags, int w, int h)
 {
-	if (SDL_WINDOWPOS_ISUNDEFINED(last_position_x) || SDL_WINDOWPOS_ISUNDEFINED(last_position_y))
-	{
-		last_position_x = last_position_y = SDL_WINDOWPOS_UNDEFINED_DISPLAY((int)vid_displayindex->value);
-	}
-
-	window = SDL_CreateWindow("Yamagi Quake II", last_position_x, last_position_y, w, h, flags);
+	/* Place the window at the center of the selected display. */
+	int winpos = SDL_WINDOWPOS_CENTERED_DISPLAY((int)vid_displayindex->value);
+	window = SDL_CreateWindow("Yamagi Quake II", winpos, winpos, w, h, flags);
 
 	if (window)
 	{
 
 		/* save current display as default */
 		last_display = SDL_GetWindowDisplayIndex(window);
-		SDL_GetWindowPosition(window, &last_position_x, &last_position_y);
 
 		/* Check if we're really in the requested diplay mode. There is
 		   (or was) an SDL bug were SDL switched into the wrong mode
@@ -350,13 +344,9 @@ ShutdownGraphics(void)
 		last_display = SDL_GetWindowDisplayIndex(window);
 
 		/* or if current display isn't the desired default */
-		if (last_display != vid_displayindex->value) {
-			last_position_x = last_position_y = SDL_WINDOWPOS_UNDEFINED;
+		if (last_display != vid_displayindex->value)
+		{
 			last_display = vid_displayindex->value;
-		}
-		else {
-			SDL_GetWindowPosition(window,
-				      &last_position_x, &last_position_y);
 		}
 
 		/* cleanly ungrab input (needs window) */
@@ -688,7 +678,6 @@ GLimp_GetDesktopMode(int *pwidth, int *pheight)
 	{
 		/* save current display as default */
 		last_display = SDL_GetWindowDisplayIndex(window);
-		SDL_GetWindowPosition(window, &last_position_x, &last_position_y);
 	}
 
 	if (last_display < 0)
